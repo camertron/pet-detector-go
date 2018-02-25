@@ -1,8 +1,23 @@
 package main
 
-// import "fmt"
-// import "strconv"
-// import "github.com/davecgh/go-spew/spew"
+import "fmt"
+import "strings"
+import "strconv"
+
+type DistanceMap map[string]map[string]int;
+
+func (dm *DistanceMap) Print() {
+  for startName, rest := range *dm {
+    for finishName, distance := range rest {
+      fmt.Println(startName + " -> " + finishName + " = " + strconv.Itoa(distance));
+    }
+  }
+}
+
+type Entity struct {
+  Track string;
+  Name string;
+}
 
 type Vertex struct {
   value *Entity;
@@ -31,22 +46,15 @@ func (g *Graph) AddEdge(value1 *Entity, value2 *Entity) {
   g.vertices[value1.Name].AddNeighbor(g.vertices[value2.Name]);
 }
 
-type Distance struct {
-  distance int;
-}
-
-var nilDistance Distance;
-
 func (g *Graph) ShortestPath(source, target *Entity) []*Entity {
-  distances := make(map[string]*Distance);
+  distances := make(map[string]int);
   previouses := make(map[string]*Vertex);
 
   for name, _ := range g.vertices {
-    distances[name] = &nilDistance;
     previouses[name] = nil;
   }
 
-  distances[source.Name] = &Distance{distance: 0};
+  distances[source.Name] = 0;
   verts := make(map[string]*Vertex);
 
   // copy vertex map
@@ -60,10 +68,8 @@ func (g *Graph) ShortestPath(source, target *Entity) []*Entity {
     nearestVertex = nil;
 
     for name, v := range verts {
-      if distances[name] != &nilDistance {
-        distance := distances[name].distance;
-
-        if nearestVertex == nil || distance < distances[nearestVertex.value.Name].distance {
+      if distance, ok := distances[name]; ok {
+        if nearestVertex == nil || distance < distances[nearestVertex.value.Name] {
           nearestVertex = v;
         }
       }
@@ -73,21 +79,19 @@ func (g *Graph) ShortestPath(source, target *Entity) []*Entity {
       break;
     }
 
-    if distances[nearestVertex.value.Name] == &nilDistance {
+    if _, ok := distances[nearestVertex.value.Name]; !ok {
       break;
     }
 
     if target != nil && nearestVertex.value == target {
-      return g.composePath(target, distances[target.Name].distance, previouses);
+      return g.composePath(target, distances[target.Name], previouses);
     }
 
-    alt := distances[nearestVertex.value.Name].distance + 1;
+    alt := distances[nearestVertex.value.Name] + 1;
 
     for name, _ := range nearestVertex.neighbors {
-      if distances[name] == &nilDistance {
-        distances[name] = &Distance{distance: alt};
-      } else if alt < distances[name].distance {
-        distances[name].distance = alt;
+      if _, ok := distances[name]; !ok || alt < distances[name] {
+        distances[name] = alt;
       }
 
       previouses[name] = nearestVertex;
@@ -110,19 +114,21 @@ func (g *Graph) composePath(target *Entity, distance int, previouses map[string]
   return result;
 }
 
-// func main() {
-//   first := Entity{Track: "top bottom", Name: "petTabby"};
-//   second := Entity{Track: "foo foo", Name: "track"};
-//   third := Entity{Track: "left right", Name: "houseTabby"};
+func (g *Graph) GetDistanceMap() DistanceMap {
+  distances := make(DistanceMap);
 
-//   graph := NewGraph();
-//   graph.AddVertex(&first);
-//   graph.AddVertex(&second);
-//   graph.AddVertex(&third);
-//   graph.AddEdge(&first, &second);
-//   graph.AddEdge(&second, &third);
+  for fromName, fromVertex := range g.vertices {
+    for toName, toVertex := range g.vertices {
+      if fromVertex != toVertex && !strings.Contains(fromName, "track") && !strings.Contains(toName, "track") {
+        if distances[fromName] == nil {
+          distances[fromName] = make(map[string]int)
+        }
 
-//   path := graph.ShortestPath(&first, &third);
+        shortestPath := g.ShortestPath(fromVertex.value, toVertex.value);
+        distances[fromName][toName] = len(shortestPath);
+      }
+    }
+  }
 
-//   spew.Dump(path);
-// }
+  return distances;
+}
