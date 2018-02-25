@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 import "strings"
-// import "strconv"
+import "strconv"
 // import "github.com/davecgh/go-spew/spew"
 import "encoding/json"
 
@@ -41,9 +41,9 @@ func main() {
         }
 
         shortestPath := graph.ShortestPath(fromVertex.value, toVertex.value);
-        fmt.Println(shortestPath);
-        // fmt.Println(fromEntity.Name + " -> " + toEntity.Name + " = " + strconv.Itoa(distance));
-        // distances[fromEntity][toEntity] = distance;
+        distance := len(shortestPath);
+        fmt.Println(fromName + " -> " + toName + " = " + strconv.Itoa(distance));
+        distances[fromName][toName] = distance;
       }
     }
   }

@@ -1,6 +1,7 @@
 package main
 
 // import "fmt"
+// import "strconv"
 // import "github.com/davecgh/go-spew/spew"
 
 type Vertex struct {
@@ -21,22 +22,31 @@ func NewGraph() *Graph {
 }
 
 func (g *Graph) AddVertex(value *Entity) {
-  g.vertices[value.Name] = &Vertex{value: value, neighbors: make(map[string]*Vertex)};
+  if _, ok := g.vertices[value.Name]; !ok {
+    g.vertices[value.Name] = &Vertex{value: value, neighbors: make(map[string]*Vertex)};
+  }
 }
 
 func (g *Graph) AddEdge(value1 *Entity, value2 *Entity) {
   g.vertices[value1.Name].AddNeighbor(g.vertices[value2.Name]);
 }
 
+type Distance struct {
+  distance int;
+}
+
+var nilDistance Distance;
+
 func (g *Graph) ShortestPath(source, target *Entity) []*Entity {
-  distances := make(map[string]int);
+  distances := make(map[string]*Distance);
   previouses := make(map[string]*Vertex);
 
   for name, _ := range g.vertices {
+    distances[name] = &nilDistance;
     previouses[name] = nil;
   }
 
-  distances[source.Name] = 0;
+  distances[source.Name] = &Distance{distance: 0};
   verts := make(map[string]*Vertex);
 
   // copy vertex map
@@ -50,8 +60,10 @@ func (g *Graph) ShortestPath(source, target *Entity) []*Entity {
     nearestVertex = nil;
 
     for name, v := range verts {
-      if distance, ok := distances[name]; ok {
-        if nearestVertex == nil || distance < distances[nearestVertex.value.Name] {
+      if distances[name] != &nilDistance {
+        distance := distances[name].distance;
+
+        if nearestVertex == nil || distance < distances[nearestVertex.value.Name].distance {
           nearestVertex = v;
         }
       }
@@ -61,21 +73,24 @@ func (g *Graph) ShortestPath(source, target *Entity) []*Entity {
       break;
     }
 
-    if _, ok := distances[nearestVertex.value.Name]; !ok {
+    if distances[nearestVertex.value.Name] == &nilDistance {
       break;
     }
 
     if target != nil && nearestVertex.value == target {
-      return g.composePath(target, distances[target.Name], previouses);
+      return g.composePath(target, distances[target.Name].distance, previouses);
     }
 
-    alt := distances[nearestVertex.value.Name] + 1;
+    alt := distances[nearestVertex.value.Name].distance + 1;
 
     for name, _ := range nearestVertex.neighbors {
-      if _, ok := distances[name]; !ok || alt < distances[name] {
-        distances[name] = alt;
-        previouses[name] = nearestVertex;
+      if distances[name] == &nilDistance {
+        distances[name] = &Distance{distance: alt};
+      } else if alt < distances[name].distance {
+        distances[name].distance = alt;
       }
+
+      previouses[name] = nearestVertex;
     }
 
     delete(verts, nearestVertex.value.Name);
