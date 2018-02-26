@@ -1,6 +1,8 @@
 package main
 
-func solve(matrixRef *Matrix, gas int) []*Entity {
+const MAX_CAR_CAPACITY = 4
+
+func Solve(matrixRef *Matrix, gas int) []*Entity {
   matrix := *matrixRef;
   graph := matrix.ToGraph();
   distances := graph.GetDistanceMap();

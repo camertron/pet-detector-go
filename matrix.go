@@ -4,6 +4,16 @@ import "strings"
 
 type Matrix [][]Entity;
 
+func NewMatrix(rows int, cols int) Matrix {
+  m := make(Matrix, rows)
+
+  for i := range m {
+    m[i] = make([]Entity, cols)
+  }
+
+  return m
+}
+
 func (mRef *Matrix) ToGraph() *Graph {
   matrix := *mRef;
   graph := NewGraph();
