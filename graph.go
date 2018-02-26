@@ -14,11 +14,6 @@ func (dm *DistanceMap) Print() {
   }
 }
 
-type Entity struct {
-  Track string;
-  Name string;
-}
-
 type Vertex struct {
   value *Entity;
   neighbors map[string]*Vertex;

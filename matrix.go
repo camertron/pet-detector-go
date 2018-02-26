@@ -21,11 +21,11 @@ func (mRef *Matrix) ToGraph() *Graph {
   return graph;
 }
 
-func (m *Matrix) width() int {
+func (m *Matrix) GetWidth() int {
   return len((*m)[0]);
 }
 
-func (m *Matrix) height() int {
+func (m *Matrix) GetHeight() int {
   return len(*m);
 }
 
@@ -94,7 +94,7 @@ func (mRef *Matrix) topNeighbor(x, y int) *Entity {
 func (mRef *Matrix) bottomNeighbor(x, y int) *Entity {
   var m = *mRef;
 
-  if y < m.height() - 1 {
+  if y < m.GetHeight() - 1 {
     return &(m[y + 1][x]);
   }
 
@@ -114,7 +114,7 @@ func (mRef *Matrix) leftNeighbor(x, y int) *Entity {
 func (mRef *Matrix) rightNeighbor(x, y int) *Entity {
   var m = *mRef;
 
-  if x < m.width() - 1 {
+  if x < m.GetWidth() - 1 {
     return &(m[y][x + 1]);
   }
 
