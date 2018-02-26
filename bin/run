@@ -1,0 +1,3 @@
+#! /bin/bash
+
+go run graph.go matrix.go entity.go solver.go level_parser.go game_result.go pets.go

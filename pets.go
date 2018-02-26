@@ -1,20 +1,76 @@
 package main
 
 import "fmt"
+import "strconv"
+import "strings"
+import "io/ioutil"
+import "encoding/csv"
+import "encoding/json"
 // import "github.com/davecgh/go-spew/spew"
-// import "encoding/json"
-
-// var data = `[[{"track":"bottom right","name":"houseCockatiel"},{"track":"bottom left right","name":"petSiamese"},{"track":"bottom left right","name":"track-0"},{"track":"bottom left","name":"track-1"}],[{"track":"top bottom right","name":"petTurtle"},{"track":"top left right","name":"petDacshund"},{"track":"top bottom left","name":"houseHedgehog"},{"track":"top bottom","name":"track-2"}],[{"track":"top bottom","name":"track-3"},{"track":"bottom right","name":"petTabby"},{"track":"top bottom left right","name":"petHusky"},{"track":"top bottom left","name":"petHedgehog"}],[{"track":"top bottom","name":"houseTabby"},{"track":"top bottom right","name":"car"},{"track":"top left right","name":"track-4"},{"track":"top bottom left","name":"track-5"}],[{"track":"top bottom","name":"petCockatiel"},{"track":"top right","name":"track-6"},{"track":"bottom left right","name":"track-7"},{"track":"top bottom left","name":"houseTurtle"}],[{"track":"top right","name":"houseSiamese"},{"track":"left right","name":"houseDacshund"},{"track":"top left right","name":"track-8"},{"track":"top left","name":"houseHusky"}]]`;
-var data = "E...a.A.d.h;. .     . .;..D...4 B.f;. . . . . .;H ..e C g.c;. . . . . .;..b.F...G ."
-var gas = 25
 
 func main() {
-  // json.Unmarshal([]byte(data), &matrix)
+  data, _ := ioutil.ReadFile("/Users/cameron/Desktop/game_result.json")
+  var gameResult GameResult
+  json.Unmarshal([]byte(data), &gameResult)
+  gameResultData := gameResult.Game_result.Game_result_data
 
-  matrix := ParseLevel(data)
-  result := Solve(matrix, gas)
+  var solutions map[string][]*SolutionStep
+  solutionData, _ := ioutil.ReadFile("./solutions.json")
+  json.Unmarshal([]byte(solutionData), &solutions)
 
-  for _, entity := range result {
-    fmt.Println(entity.Name)
+  roundReader := csv.NewReader(strings.NewReader(strings.Replace(gameResultData.Round_csv, "/", "\n", -1)))
+  rounds, _ := roundReader.ReadAll()
+
+  trialReader := csv.NewReader(strings.NewReader(strings.Replace(gameResultData.Trial_csv, "/", "\n", -1)))
+  trials, _ := trialReader.ReadAll()
+
+  firstMoves := make(map[string]*SolutionStep)
+
+  for i, trial := range trials {
+    // skip header, make sure there are two numbers in the address
+    if i == 0 || len(trial[0]) < 2 {
+      continue
+    }
+
+    round := trial[2]
+
+    if _, ok := firstMoves[round]; !ok {
+      rowAndCol := strings.Split(trial[0], "")
+      fmt.Println(rowAndCol)
+      rRaw, cRaw := rowAndCol[0], rowAndCol[1]
+      r, _ := strconv.Atoi(rRaw)
+      c, _ := strconv.Atoi(cRaw)
+      firstMoves[round] = &SolutionStep{R: r, C: c}
+    }
   }
+
+  fmt.Println("")
+
+  for i, round := range rounds {
+    // skip header
+    if i == 0 {
+      continue
+    }
+
+    gas, _ := strconv.Atoi(round[2])  // 2nd column is fuel
+    matrix := ParseLevel(round[10])   // 10th column is trial_csv
+    signature := matrix.GetSignature()
+    var solution []*SolutionStep
+
+    if foundSolution, ok := solutions[signature]; ok {
+      solution = foundSolution
+    } else {
+      solution = Solve(matrix, gas)
+      solutions[signature] = solution
+    }
+
+    for _, entity := range solution {
+      fmt.Println("(" + strconv.Itoa(entity.C) + ", " + strconv.Itoa(entity.R) + ")")
+    }
+
+    fmt.Println("")
+  }
+
+  marshalled, _ := json.MarshalIndent(solutions, "", " ")
+  _ = ioutil.WriteFile("./solutions.json", marshalled, 0644)
 }

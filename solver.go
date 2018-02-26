@@ -2,7 +2,12 @@ package main
 
 const MAX_CAR_CAPACITY = 4
 
-func Solve(matrixRef *Matrix, gas int) []*Entity {
+type SolutionStep struct {
+  R int
+  C int
+}
+
+func Solve(matrixRef *Matrix, gas int) []*SolutionStep {
   matrix := *matrixRef;
   graph := matrix.ToGraph();
   distances := graph.GetDistanceMap();
@@ -42,7 +47,16 @@ func Solve(matrixRef *Matrix, gas int) []*Entity {
     }
   }
 
-  return solveHelper(car, make([]*Entity, 0), housesAndPets, gas, make([]*Entity, 0), housePetMap, &distances);
+  solutionEntities := solveHelper(
+    car, make([]*Entity, 0), housesAndPets, gas, make([]*Entity, 0), housePetMap, &distances,
+  )
+
+  solutionSteps := make([]*SolutionStep, 0, len(solutionEntities))
+  for _, entity := range solutionEntities {
+    solutionSteps = append(solutionSteps, &SolutionStep{R: entity.R, C: entity.C})
+  }
+
+  return solutionSteps
 }
 
 func solveHelper(

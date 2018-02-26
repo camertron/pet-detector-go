@@ -1,6 +1,9 @@
 package main
 
+import "strconv"
 import "strings"
+import "crypto/md5"
+import "encoding/hex"
 
 type Matrix [][]Entity;
 
@@ -29,6 +32,22 @@ func (mRef *Matrix) ToGraph() *Graph {
   }
 
   return graph;
+}
+
+func (mRef *Matrix) GetSignature() string {
+  matrix := *mRef;
+  hasher := md5.New()
+
+  for r := range matrix {
+    for c := range matrix[r] {
+      hasher.Write([]byte(matrix[r][c].Track))
+      hasher.Write([]byte(strconv.Itoa(matrix[r][c].R)))
+      hasher.Write([]byte(strconv.Itoa(matrix[r][c].C)))
+      hasher.Write([]byte(matrix[r][c].Abbrev))
+    }
+  }
+
+  return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func (m *Matrix) GetWidth() int {

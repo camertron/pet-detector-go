@@ -66,7 +66,10 @@ func ParseLevel(levelData string) *Matrix {
         track = append(track, "bottom")
       }
 
-      matrix[r / 2][c / 2] = Entity{Name: entityName, Track: strings.Join(track, " ")}
+      matrix[r / 2][c / 2] = Entity{
+        Name: entityName, Track: strings.Join(track, " "),
+        R: r / 2, C: c / 2, Abbrev: entityAbbrev,
+      }
     }
   }
 
